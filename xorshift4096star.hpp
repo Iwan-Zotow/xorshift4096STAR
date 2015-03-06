@@ -4,15 +4,15 @@
 
 #include <cstdint>
 #include <algorithm>
-#include <utility>
+#include <limits>
 
 namespace OTI
 {
     class xorshift4096star
     {
 #pragma region Typedefs/Constants
-        public: typedef uint_fast64_t result_type;
-        public: typedef result_type   seed_type;
+        public: using result_type = unsigned long long;
+        public: using seed_type   = unsigned long long;
 
         // those values are from S.Vigna "An experimental exploration of Marsaglia's xorshift generators, scrambled",
         // http://arxiv.org/abs/1402.6246, known as M(31,11,30) with scrambling
@@ -22,24 +22,9 @@ namespace OTI
 
         public: static constexpr result_type  mult  = 8372773778140471301ULL;
 
-        public: static constexpr seed_type    default_seed[] { 3001ULL, 3079ULL, 3257ULL, 3511ULL,
-                                                               4001ULL, 4057ULL, 4507ULL, 4583ULL,
-                                                               5003ULL, 5281ULL, 5861ULL, 5987ULL,
-                                                               6007ULL, 6229ULL, 6301ULL, 7901ULL,
-                                                               3001ULL, 3079ULL, 3257ULL, 3511ULL,
-                                                               4001ULL, 4057ULL, 4507ULL, 4583ULL,
-                                                               5003ULL, 5281ULL, 5861ULL, 5987ULL,
-                                                               6007ULL, 6229ULL, 6301ULL, 7901ULL,
-                                                               3001ULL, 3079ULL, 3257ULL, 3511ULL,
-                                                               4001ULL, 4057ULL, 4507ULL, 4583ULL,
-                                                               5003ULL, 5281ULL, 5861ULL, 5987ULL,
-                                                               6007ULL, 6229ULL, 6301ULL, 7901ULL,
-                                                               3001ULL, 3079ULL, 3257ULL, 3511ULL,
-                                                               4001ULL, 4057ULL, 4507ULL, 4583ULL,
-                                                               5003ULL, 5281ULL, 5861ULL, 5987ULL,
-                                                               6007ULL, 6229ULL, 6301ULL, 7901ULL };
+        public: static const     seed_type    default_seed[];
 
-        public: static constexpr float        norm  = float{double{1.0}/double{result_type{-1LL}}};
+        public: static constexpr float        norm  = float{double{1.0}/double(std::numeric_limits<result_type>::max())}; // narrowing conversion
 #pragma endregion
 
 #pragma region Data
@@ -57,7 +42,7 @@ namespace OTI
         {
         }
 
-        public: xorshift4096star(xorshift4096star const& r):
+        public: xorshift4096star(const xorshift4096star& r):
             xorshift4096star{r._seed}
         {
             _p = r._p;
@@ -67,9 +52,9 @@ namespace OTI
             xorshift4096star{r._seed}
         {
             _p = r._p;
-        }        
+        }
 
-        public: xorshift4096star& operator=(xorshift4096star const& r)
+        public: xorshift4096star& operator=(const xorshift4096star& r)
         {
             std::copy(r._seed, r._seed + 64, _seed);
             _p = r._p;
@@ -103,9 +88,9 @@ namespace OTI
 #pragma region Mutators
         public: result_type sample() const
         {
-            uint64_t s0 = _seed[ _p ];
+            auto s0 = _seed[ _p ];
             _p = ( _p + 1 ) & 63;
-            uint64_t s1 = _seed[ _p ];
+            auto s1 = _seed[ _p ];
 
             s1 ^= s1 << shift_a;
             s1 ^= s1 >> shift_b;
@@ -118,7 +103,7 @@ namespace OTI
             return float(sample()) * norm;
         }
 
-        public: void skip(uint64_t ns) const;
+        public: void skip(seed_type ns) const;
 #pragma endregion
-    };    
+    };
 }
